@@ -18,6 +18,9 @@
 #define LCD_FunctionSet4bit 0x2C          // 4-bit data, 2-line display, 5 x 7 font
 #define LCD_SetCursor       0x80          // set cursor position
 
+#define Four_Bit  0
+#define Eight_Bit 1
+
 /*********************************************************************/
 /*************************** Structures ******************************/
 /*********************************************************************/
@@ -30,10 +33,16 @@ typedef struct {
 }LCD_Control_t;
 
 typedef struct {
-	Port_t 		  PortData   ;
-	LCD_Control_t LCD_Control;
+	Port_t 		  PortData     ;
+	PinNumber_t   Pin1         ;
+	PinNumber_t   Pin2         ;
+	PinNumber_t   Pin3         ;
+	PinNumber_t   Pin4         ;
+	LCD_Control_t LCD_Control  ;
 	u8 			  NumberDataBit;
 }LCD_t;
+
+
 
 /*********************************************************************/
 /*************************** Functions *******************************/
@@ -43,6 +52,8 @@ void LCD_Init		 (LCD_t LCD 		   );
 void LCD_WriteCommand(LCD_t LCD,u8  Command);
 void LCD_WriteData   (LCD_t LCD,u8  Data   );
 void LCD_WriteString (LCD_t LCD,u8* Astring);
+void LCD_WriteNumber (LCD_t LCD,u32 Number );
 void Goto_X_Y		 (LCD_t LCD,u8 Row,u8 Colume);
+
 
 #endif /* HAL_LCD_LCD_H_ */

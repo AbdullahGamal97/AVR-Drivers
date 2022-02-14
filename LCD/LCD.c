@@ -19,10 +19,16 @@ void LCD_Init(LCD_t LCD )
 	/* Number Of Data Bit Used */
 	switch(LCD.NumberDataBit)
 	{
-		case 8:
+		case Eight_Bit:
 			DIO_SetPortDir(LCD.PortData,0xff); break;
-		case 4:
-			DIO_SetPortDir(LCD.PortData,0xf0); break;  //in case 4 data bit should use the Last 4 bits in port
+
+		case Four_Bit:
+			DIO_SetPinDir(LCD.PortData,LCD.Pin1,OUTPUT);
+			DIO_SetPinDir(LCD.PortData,LCD.Pin2,OUTPUT);
+			DIO_SetPinDir(LCD.PortData,LCD.Pin3,OUTPUT);
+			DIO_SetPinDir(LCD.PortData,LCD.Pin4,OUTPUT);
+			break;
+
 		default: break;
 	}
 	DIO_SetPinDir (LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,OUTPUT);
@@ -36,7 +42,7 @@ void LCD_Init(LCD_t LCD )
 	switch(LCD.NumberDataBit)
 	{
 		/* In Case 8 Bit Used For Data */
-		case 8:
+		case Eight_Bit:
 			/* Return Home  */
 			LCD_WriteCommand(LCD , LCD_Home);
 			_delay_ms (15);
@@ -60,9 +66,9 @@ void LCD_Init(LCD_t LCD )
 			break;
 
 		/* In Case 4 Bit Used For Data */
-		case 4:
-			/* Return Home  */
+		case Four_Bit:
 
+			/* Return Home  */
 			LCD_WriteCommand(LCD , LCD_Home);
 			_delay_ms (15);
 
@@ -95,12 +101,13 @@ void LCD_Init(LCD_t LCD )
 /***************************************************************************************/
 void LCD_WriteCommand(LCD_t LCD,u8 Command)
 {
-	/* Number Of Data Bit Used  */
-	switch (LCD.NumberDataBit)
-		{
-		    /* In Case 8 Bit Used For Data */
-			case 8:
 
+
+
+	switch (LCD.NumberDataBit)
+	{
+		/* In Case 8 Bit Used For Data */
+		case Eight_Bit:
 				/* Set RS to LOW */
 				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,LOW);
 
@@ -121,61 +128,61 @@ void LCD_WriteCommand(LCD_t LCD,u8 Command)
 
 				/* Delay for 10ms to let the LCD execute command */
 				_delay_ms (10);
-
 				break;
 
-			/* In Case 4 Bit Used For Data */
-			case 4:
+		/* In Case 4 Bit Used For Data */
+		case Four_Bit:
 
-				for(s8 i=1;i>=0;i--)
-				{
-					/* Set RS to LOW */
-					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,LOW);
+				/* Set RS to LOW */
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,LOW);
 
-					/* Set E to HIGH  */
-					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+				/* Set E to HIGH */
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
 
-					/* Load Command on Data bus */
-					if (i)
-					{
-						u8 CommandFirst = (Command >>4);
-						DIO_SetPortValue(LCD.PortData,(CommandFirst));
+				/* Load Second Half Command on Data bus */
+				DIO_SetPinValue(LCD.PortData,LCD.Pin1,((Command >>4) & 1));
+				DIO_SetPinValue(LCD.PortData,LCD.Pin2,((Command >>5) & 1));
+				DIO_SetPinValue(LCD.PortData,LCD.Pin3,((Command >>6) & 1));
+				DIO_SetPinValue(LCD.PortData,LCD.Pin4,((Command >>7) & 1));
 
-						/*
-						DIO_SetPinValue(LCD.PortData,PIN4,(Command & 0x10));
-						DIO_SetPinValue(LCD.PortData,PIN5,(Command & 0x20));
-						DIO_SetPinValue(LCD.PortData,PIN6,(Command & 0x40));
-						DIO_SetPinValue(LCD.PortData,PIN7,(Command & 0x80));
-						 */
-					}else
-					{
-						DIO_SetPortValue(LCD.PortData,(Command));
-						/*
-						DIO_SetPinValue(LCD.PortData,PIN4,(Command & 0x01));
-						DIO_SetPinValue(LCD.PortData,PIN5,(Command & 0x02));
-						DIO_SetPinValue(LCD.PortData,PIN6,(Command & 0x04));
-						DIO_SetPinValue(LCD.PortData,PIN7,(Command & 0x08));
-						 */
-					}
+				/* Set E to LOW */
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,LOW);
 
-					/* Set E to LOW */
-					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,LOW);
+				/* Wait for E to settle */
+				_delay_ms(2);
 
-					/* Wait for E to settle */
-					_delay_ms(5);
+				/* Set E to HIGH */
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+				/* Wait for E to settle */
+				_delay_ms(5);
 
-					/* Set E to HIGH */
-					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+				/* Set E to HIGH
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);*/
 
-					/* Delay for 10ms to let the LCD execute command */
-					_delay_ms (10);
+				/* Load First Half Command on Data bus */
+				DIO_SetPinValue(LCD.PortData,LCD.Pin1,((Command >>0) & 1));
+				DIO_SetPinValue(LCD.PortData,LCD.Pin2,((Command >>1) & 1));
+				DIO_SetPinValue(LCD.PortData,LCD.Pin3,((Command >>2) & 1));
+				DIO_SetPinValue(LCD.PortData,LCD.Pin4,((Command >>3) & 1));
 
-				}
+				/* Set E to LOW */
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,LOW);
 
+				/* Wait for E to settle */
+				_delay_ms(2);
+
+				/* Set E to HIGH */
+				DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+
+				/* Delay for 10ms to let the LCD execute command */
+				_delay_ms (5);
 				break;
-			default: break;
-		}
+
+		default: break;
+	}
+
 }
+
 
 /***************************************************************************************/
 /* Description! Interface to write character on LCD screen                             */
@@ -184,13 +191,14 @@ void LCD_WriteCommand(LCD_t LCD,u8 Command)
 /***************************************************************************************/
 void LCD_WriteData(LCD_t LCD,u8 Data)
 {
-	   /* Number Of Data Bit Used  */
-		switch (LCD.NumberDataBit)
-			{
-			    /* In Case 8 Bit Used For Data */
-				case 8:
 
-					/* Set RS to High */
+
+	switch (LCD.NumberDataBit)
+	{
+		/* In Case 8 Bit Used For Data */
+		case Eight_Bit:
+
+					/* Set RS to HIGH */
 					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,HIGH);
 
 					/* Set E to HIGH  */
@@ -209,62 +217,60 @@ void LCD_WriteData(LCD_t LCD,u8 Data)
 					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
 
 					/* Delay for 10ms to let the LCD execute command */
-					_delay_ms (10);
-
+					_delay_ms(5);
 					break;
 
-				/* In Case 4 Bit Used For Data */
-				case 4:
+		/* In Case 4 Bit Used For Data */
+		case Four_Bit:
 
-					for(s8 i=1;i>=0;i--)
-					{
-						/* Set RS to High */
-						DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,HIGH);
+					/* Set RS to HIGH */
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.RS,HIGH);
 
-						/* Set E to HIGH  */
-						DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+					/* Set E to HIGH */
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
 
-						/* Load Command on Data bus */
-						if (i)
-						{
-							u8 DataFirst = (Data >>4);
-							DIO_SetPortValue(LCD.PortData,(DataFirst));
-							/*
-							DIO_SetPinValue(LCD.PortData,PIN4,(Data & 0x10));
-							DIO_SetPinValue(LCD.PortData,PIN5,(Data & 0x20));
-							DIO_SetPinValue(LCD.PortData,PIN6,(Data & 0x40));
-							DIO_SetPinValue(LCD.PortData,PIN7,(Data & 0x80));
-							*/
-						}else
-						{
-							DIO_SetPortValue(LCD.PortData,(Data));
-							/*
-							DIO_SetPinValue(LCD.PortData,PIN4,(Data & 0x01));
-							DIO_SetPinValue(LCD.PortData,PIN5,(Data & 0x02));
-							DIO_SetPinValue(LCD.PortData,PIN6,(Data & 0x04));
-							DIO_SetPinValue(LCD.PortData,PIN7,(Data & 0x08));
-							 */
-						}
+					/* Load Second Half Data on Data bus */
+					DIO_SetPinValue(LCD.PortData,LCD.Pin1,((Data >>4) & 1));
+					DIO_SetPinValue(LCD.PortData,LCD.Pin2,((Data >>5) & 1));
+					DIO_SetPinValue(LCD.PortData,LCD.Pin3,((Data >>6) & 1));
+					DIO_SetPinValue(LCD.PortData,LCD.Pin4,((Data >>7) & 1));
 
-						/* Set E to LOW */
-						DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,LOW);
+					/* Set E to LOW */
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,LOW);
 
-						/* Wait for E to settle */
-						_delay_ms(5);
+					/* Wait for E to settle */
+					_delay_ms(2);
 
-						/* Set E to HIGH */
-						DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+					/* Set E to HIGH */
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
 
-						/* Delay for 10ms to let the LCD execute command */
-						_delay_ms (10);
+					/* Wait for E to settle */
+					_delay_ms(5);
 
-					}
+					/* Set E to HIGH *
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);*/
 
+					/* Load First Half Data on Data bus */
+					DIO_SetPinValue(LCD.PortData,LCD.Pin1,((Data >>0) & 1));
+					DIO_SetPinValue(LCD.PortData,LCD.Pin2,((Data >>1) & 1));
+					DIO_SetPinValue(LCD.PortData,LCD.Pin3,((Data >>2) & 1));
+					DIO_SetPinValue(LCD.PortData,LCD.Pin4,((Data >>3) & 1));
+
+					/* Set E to LOW */
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,LOW);
+
+					/* Wait for E to settle */
+					_delay_ms(2);
+
+					/* Set E to HIGH */
+					DIO_SetPinValue(LCD.LCD_Control.PortControl,LCD.LCD_Control.E,HIGH);
+
+					/* Delay for 10ms to let the LCD execute command */
+					_delay_ms (5);
 					break;
-				default: break;
-			}
 
-
+		default: break;
+	}
 }
 
 /***************************************************************************************/
@@ -285,6 +291,50 @@ void LCD_WriteString(LCD_t LCD,u8* Astring)
 
 		/* Delay for 5ms to let the LCD execute command */
 		_delay_ms(5);
+	}
+}
+
+/***************************************************************************************/
+/* Description! Interface to write character on LCD screen                             */
+/* Input      ! LCD Name , Character Data                                              */
+/* Output     ! Nothing                                                                */
+/***************************************************************************************/
+void LCD_WriteNumber(LCD_t LCD,u32 Number)
+{
+	u8 DigitalValue[10];
+	u8 DigitalCounter = 9;
+
+	if(Number == 0)
+	{
+		LCD_WriteData(LCD,'0');
+	}
+
+	while(Number != 0)
+	{
+		DigitalValue[ DigitalCounter ]= Number % 10;
+		Number /=10;
+		DigitalCounter--;
+	}
+
+	DigitalCounter++;
+
+	for(; DigitalCounter <10 ; DigitalCounter++)
+	{
+		switch( DigitalValue[ DigitalCounter ] )
+		{
+
+			case 0: LCD_WriteData(LCD,'0'); break;
+			case 1: LCD_WriteData(LCD,'1'); break;
+			case 2: LCD_WriteData(LCD,'2'); break;
+			case 3: LCD_WriteData(LCD,'3'); break;
+			case 4: LCD_WriteData(LCD,'4'); break;
+			case 5: LCD_WriteData(LCD,'5'); break;
+			case 6: LCD_WriteData(LCD,'6'); break;
+			case 7: LCD_WriteData(LCD,'7'); break;
+			case 8: LCD_WriteData(LCD,'8'); break;
+			case 9: LCD_WriteData(LCD,'9'); break;
+
+		}
 	}
 }
 
